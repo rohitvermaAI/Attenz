@@ -15,11 +15,7 @@ import pandas as pd
 from geopy.distance import geodesic
 
 app = Flask(__name__)
-from subprocess import STDOUT, check_call
-check_call(['apt-get', 'update'], stdout=open(os.devnull,'wb'), stderr=STDOUT)
-check_call(['apt-get', 'install', '-y', 'libgl1'], stdout=open(os.devnull,'wb'), stderr=STDOUT)
-check_call(['apt-get', 'install', '-y', 'libglib2.0-0'], stdout=open(os.devnull,'wb'), stderr=STDOUT)
-check_call(['apt-get', 'update'], stdout=open(os.devnull,'wb'), stderr=STDOUT)
+
 
 def save_image(image_data, eid, ename):
     img_path = f"static/TrainingImage/{ename}.{eid}.png"
