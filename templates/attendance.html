@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Attendance</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="../static/lagozon.png" alt="Company Logo">
+            <h1>Attenz.AI</h1>
+        </div>
+        <h1>Take Attendance</h1>
+        <form id="attendance-form" action="/mark_attendance" method="post">
+            <div id="camera">
+                <video id="video" width="320" height="240" autoplay></video>
+                <button id="snap" type="button">Take Attendance</button>
+                <canvas id="canvas" style="display:none;"></canvas>
+                <input type="hidden" name="image_data" id="image_data">
+                <div id="error-message" style="color:red;"></div>
+            </div>
+            <div id="welcome-message" style="display:none;">
+                <img id="emp-image" src="" alt="Employee Image" />
+    
+                <h2>Welcome <span id="emp-name"></span>!</h2>
+                <p>Employee ID: <span id="emp-id"></span></p>
+            </div>
+        </form>
+      
+    </div>
+</body>
+
+<script>
+    (function () {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snap = document.getElementById('snap');
+        const image_data = document.getElementById('image_data');
+        const form = document.getElementById('attendance-form');
+        const errorMessage = document.getElementById('error-message');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const empName = document.getElementById('emp-name');
+        const empId = document.getElementById('emp-id');
+        const empImage = document.getElementById('emp-image');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function (err) {
+                console.log("An error occurred: " + err);
+                errorMessage.textContent = "Cannot access camera. Please check permissions and try again.";
+            });
+
+        snap.addEventListener('click', function () {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const context = canvas.getContext('2d');
+                canvas.width = 160;  // Set canvas width to 160
+                canvas.height = 160; // Set canvas height to 160
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/png');
+                image_data.value = dataURL;
+
+                // Submit the form via AJAX
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/mark_attendance", true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.status === 'success') {
+                            empName.textContent = response.name;
+                            empId.textContent = response.id;
+                            empImage.src = decodeURIComponent(response.image_path);
+                            welcomeMessage.style.display = 'block';
+                            video.style.display = 'none';
+                            snap.style.display = 'none';
+                            errorMessage.textContent = '';
+                        } else {
+                            errorMessage.textContent = response.message;
+                        }
+                    } else {
+                        errorMessage.textContent = "An error occurred while taking attendance.";
+                    }
+                };
+                xhr.send(`image_data=${encodeURIComponent(dataURL)}`);
+            } else {
+                errorMessage.textContent = "Cannot capture image. Camera is not ready.";
+            }
+        });
+    })();
+</script>
+
+</html>

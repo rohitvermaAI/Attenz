@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Image</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            align-items: center;
+        }
+
+        .header img {
+            margin-right: 10px;
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        #form-fields {
+            margin-right: 20px;
+        }
+
+        #camera {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="../static/lagozon.png" alt="Company Logo">
+            <h1>Attenz.AI</h1>
+        </div>
+        <h2>Admit New Employee</h2>
+        
+        <div class="form-container">
+            <div id="form-fields">
+                <form id="employee-form" action="/capture_image" method="post" enctype="multipart/form-data">
+                    <label for="eid">Employee ID:</label>
+                    <input type="text" id="eid" name="eid" required><br>
+                    <label for="ename">Employee Name:</label>
+                    <input type="text" id="ename" name="ename" required><br>
+                    <input type="hidden" name="image_data" id="image_data">
+                </form>
+            </div>
+            <div id="camera">
+                <video id="video" width="320" height="240" autoplay></video>
+                <button id="snap" type="button">Capture Image</button>
+                <canvas id="canvas" style="display:none;"></canvas>
+                <div id="error-message" style="color:red;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const snap = document.getElementById('snap');
+            const image_data = document.getElementById('image_data');
+            const form = document.getElementById('employee-form');
+            const errorMessage = document.getElementById('error-message');
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("An error occurred: " + err);
+                    errorMessage.textContent = "Cannot access camera. Please check permissions and try again.";
+                });
+
+            snap.addEventListener('click', function() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const context = canvas.getContext('2d');
+                    canvas.width = 160;  // Set canvas width to 160
+                    canvas.height = 160; // Set canvas height to 160
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const dataURL = canvas.toDataURL('image/png');
+                    image_data.value = dataURL;
+
+                    // Submit the form
+                    form.submit();
+                } else {
+                    errorMessage.textContent = "Cannot capture image. Camera is not ready.";
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
